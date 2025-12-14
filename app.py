@@ -38,15 +38,24 @@ def handle_pets():
         # --- BUG 1: "Missing Feature" ---
         # This endpoint ignores the 'name' param, making it impossible to search by name.
 
+        name = request.args.get('name')
         category = request.args.get('category')
+
+        results = list(pets.values())
+
+        if name:
+            results = [
+                pet for pet in results
+                if pet.get('name', '').lower() == name.lower()
+            ]
+
         if category:
-            # --- BUG 2: "Wrong Feature" ---
-            # Search should be case-insensitive.
-            # The developer made it case-SENSITIVE, breaking the rule.
-            matching_pets = [pet for pet in pets.values() if pet['category'] == category]
-            return jsonify(matching_pets)
-        
-        return jsonify(list(pets.values()))
+            results = [
+                pet for pet in results
+                if pet.get('category', '').lower() == category.lower()
+            ]
+
+    return jsonify(results)
 
 @app.route('/pets/<int:pet_id>', methods=['PUT'])
 def update_pet(pet_id):
@@ -61,11 +70,16 @@ def update_pet(pet_id):
     
     # --- BUG 3: "Wrong Feature" ---
     # All fields are updated even if some of them may not be filled in
-    pet['name'] = data['name']
-    pet['category'] = data['category']
-    pet['gender'] = data['gender']
-    pet['available'] = data['available']
-    pet['birthday'] = data['birthday']
+    if 'name' in data:
+        pet['name'] = data['name']
+    if 'category' in data:
+        pet['category'] = data['category']
+    if 'gender' in data:
+        pet['gender'] = data['gender']
+    if 'available' in data:
+        pet['available'] = data['available']
+    if 'birthday' in data:
+        pet['birthday'] = data['birthday']
 
     pets[pet_id] = pet
     return jsonify(pet), 200
